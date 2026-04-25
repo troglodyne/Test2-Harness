@@ -18,17 +18,21 @@ use Cwd qw/getcwd/;
 
 use App::Yath2::Command::test;
 use App::Yath2::LogArchive;
+use Getopt::Yath::Settings;
 
-package Fake::Workspace;
-sub new           { bless { workdir => $_[1] }, $_[0] }
-sub workdir       { $_[0]->{workdir} }
-sub create_option { }
-
-package Fake::Settings;
-sub new       { bless { workspace => $_[1] }, $_[0] }
-sub workspace { $_[0]->{workspace} }
-
-package main;
+sub build_settings {
+    my ($workdir) = @_;
+    my $settings = Getopt::Yath::Settings->new;
+    App::Yath2::Command::test->options->process_args(
+        [],
+        settings => $settings,
+        env      => {},
+        cleared  => {},
+        modules  => {},
+    );
+    $settings->workspace->create_option(workdir => $workdir);
+    return $settings;
+}
 
 my $tmp = tempdir(CLEANUP => 1);
 my $tf  = "$tmp/quick.t";
@@ -47,7 +51,7 @@ chdir $cwd_dir or die "chdir: $!";
 
 my $cmd = App::Yath2::Command::test->new(
     args     => [$tf],
-    settings => Fake::Settings->new(Fake::Workspace->new($work)),
+    settings => build_settings($work),
 );
 
 my $captured = '';

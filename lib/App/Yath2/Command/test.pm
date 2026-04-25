@@ -25,7 +25,7 @@ use App::Yath2::LogArchive();
 use App::Yath2::LogArchive::Format qw/default_writer_format/;
 use App::Yath2::Streamer::Live();
 use App::Yath2::OutputManager();
-use App::Yath2::Renderer::Default();
+use App::Yath2::Options::Renderer();
 
 use Getopt::Yath;
 include_options(
@@ -105,7 +105,8 @@ sub run {
     my $run_id = $queued->{run_id};
 
     my $om = App::Yath2::OutputManager->new;
-    $om->add_renderer(App::Yath2::Renderer::Default->new);
+    my $renderers = App::Yath2::Options::Renderer->init_renderers($settings);
+    $om->add_renderer($_) for @$renderers;
 
     # Stream events synthesized from the harness's IPC state updates
     # (plus any general events its loggers record) and print them as

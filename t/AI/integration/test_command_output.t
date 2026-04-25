@@ -14,17 +14,24 @@ use File::Temp qw/tempdir tempfile/;
 use Cwd        qw/getcwd/;
 
 use App::Yath2::Command::test;
+use Getopt::Yath::Settings;
 
-package Fake::Workspace2;
-sub new           { bless { workdir => $_[1] }, $_[0] }
-sub workdir       { $_[0]->{workdir} }
-sub create_option { }
-
-package Fake::Settings2;
-sub new       { bless { workspace => $_[1] }, $_[0] }
-sub workspace { $_[0]->{workspace} }
-
-package main;
+sub build_settings {
+    my ($workdir) = @_;
+    my $settings = Getopt::Yath::Settings->new;
+    App::Yath2::Command::test->options->process_args(
+        [],
+        settings => $settings,
+        env      => {},
+        cleared  => {},
+        modules  => {},
+    );
+    $settings->workspace->create_option(workdir => $workdir);
+    # Force verbose so asserts are rendered (this test inspects the assertion
+    # text in the captured output).
+    $settings->renderer->verbose = 1;
+    return $settings;
+}
 
 my $tmp = tempdir(CLEANUP => 1);
 
@@ -43,7 +50,7 @@ chdir $cwd_dir or die "chdir cwd_dir: $!";
 
 my $cmd = App::Yath2::Command::test->new(
     args     => [$tf],
-    settings => Fake::Settings2->new(Fake::Workspace2->new($work)),
+    settings => build_settings($work),
 );
 
 # Renderer::Default clones the real STDOUT fd via clone_io(\*STDOUT), so
